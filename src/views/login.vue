@@ -2,7 +2,7 @@
     <div class="container">
         <div class="login-box">
             <h1 class="title">Login</h1>
-            <p class="subtitle">Login to your account</p>
+            <p class="subtitle">Login with your username</p>
             <div class="form-box">
                 <form @submit.prevent="handleLogin" class="login-form">
                     <div class="form-group">
@@ -21,22 +21,48 @@
     </div>
 </template>
 
-<script setup>
-import { ref } from 'vue';
+<script>
+import { ref } from "vue";
+import { db } from "@/services/firebase"; // Import Firestore
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { useRouter } from "vue-router"; // ใช้ Vue Router
+import { useUserStore } from "@/stores/index";
 
-const username = ref('');
-const password = ref('');
-const error = ref('');
+export default {
+    setup() {
+        const userStore = useUserStore();
+        const username = ref("");
+        const password = ref("");
+        const error = ref("");
+        const router = useRouter();
 
-const handleLogin = () => {
-    if (username.value === 'test' && password.value === '1234') {
-        alert('✅ Login Successful!');
-        error.value = '';
-    } else {
-        error.value = '❌ Invalid username or password';
+        const handleLogin = async () => {
+            try {
+                // ดึงข้อมูลจาก Firestore (users collection)
+                const usersRef = collection(db, "users");
+                console.log("🔥 usersRef:", usersRef);
+                const q = query(usersRef, where("name", "==", username.value), where("password", "==", password.value));
+                const querySnapshot = await getDocs(q);
+
+                if (!querySnapshot.empty) {
+                    console.log("✅ Login success!");
+                    userStore.setUsername(username.value); // เก็บชื่อผู้ใช้
+                    alert("Login successful");
+                    router.push("/controlLight");
+                } else {
+                    error.value = "❌ ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง";
+                }
+            } catch (err) {
+                console.error("🔥 Login error:", err);
+                error.value = "เกิดข้อผิดพลาดในการเข้าสู่ระบบ";
+            }
+        };
+        return { username, password, error, handleLogin };
+
     }
 };
 </script>
+
 
 <style scoped>
 .container {
@@ -95,7 +121,8 @@ const handleLogin = () => {
         transition: border 0.3s;
     }
 }
-@media screen and (min-width:461px) and (max-width:560px)  {
+
+@media screen and (min-width:461px) and (max-width:560px) {
     .form-group input {
         width: 15rem;
         padding: 0.8rem;
@@ -105,16 +132,18 @@ const handleLogin = () => {
         transition: border 0.3s;
     }
 }
+
 @media screen and (min-width:411px) and (max-width:460px) {
     .form-group input {
         width: 10rem;
         padding: 0.8rem;
         border: 1px solid #ccc;
-        border-radius: 8px; 
+        border-radius: 8px;
         outline: none;
         transition: border 0.3s;
     }
 }
+
 @media screen and (max-width:400px) {
     .form-group input {
         width: 100%;

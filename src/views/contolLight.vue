@@ -49,6 +49,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import mqtt from 'mqtt'
 import { logLightAction } from "@/services/lightService"
+import { useUserStore } from "@/stores/index";
 
 export default {
     name: 'LightControl',
@@ -58,6 +59,8 @@ export default {
         const client = ref(null)
         const searchQuery = ref('')
         const highlightedRoomId = ref(null)
+        const userStore = useUserStore();
+
 
         const rooms = ref([
             // Raspberry Pi: 172.17.23.52
@@ -206,11 +209,12 @@ export default {
             if (!client.value.connected) {
                 console.error("MQTT client not connected.")
             }
-            else{
+            else {
                 console.log("MQTT client connected. อิอิ")
             }
         })
 
+        console.log("username: ", userStore.username)
 
         return {
             rooms,
@@ -221,11 +225,11 @@ export default {
             toggleLight,
             toggleMode,
             requestRoomStatus,
-            isHighlighted
+            isHighlighted,
+            username: userStore.username
         }
     }
 }
-
 </script>
 
 <style>
